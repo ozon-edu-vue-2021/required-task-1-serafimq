@@ -15,11 +15,11 @@ let loaderTimeout;
 
 /**
  * Функция задаёт первоначальное состояние страницы.
- * Отправляется первый запрос за картинками, юез параметров т.к. с дефолтными настройками.
+ * Отправляется первый запрос за картинками, без параметров т.к. с дефолтными настройками.
  */
 const initialState = function () {
-    action.disabled = false;
-    getPictures();
+  action.disabled = false;
+  getPictures();
 }
 
 /**
@@ -29,10 +29,10 @@ const initialState = function () {
  * @param {number} limit
  */
 const getPictures = function (page = 1, limit = 10) {
-    showLoader();
-    fetch(`https://picsum.photos/v2/list?page=${page};limit=${limit}`)
-        .then(function (response) {return response.json()})
-        .then(function (result) {renderPictures(result)})
+  showLoader();
+  fetch(`https://picsum.photos/v2/list?page=${page};limit=${limit}`)
+    .then(function (response) { return response.json() })
+    .then(function (result) { renderPictures(result) })
 }
 
 /**
@@ -40,11 +40,11 @@ const getPictures = function (page = 1, limit = 10) {
  * и вызывает ф-цию для отрисовки картинки в попапе
  * @param {number} id
  */
-const getPictureInfo = function (id = 0) {
-    showLoader();
-    fetch(`https://picsum.photos/id/${id}/info`)
-        .then(function (response) {return response.json()})
-        .then(function (result) {renderPopupPicture(result)})
+const getPictureInfo = function (id) {
+  showLoader();
+  fetch(`https://picsum.photos/id/${id}/info`)
+    .then(function (response) { return response.json() })
+    .then(function (result) { renderPopupPicture(result) })
 }
 
 /**
@@ -52,7 +52,7 @@ const getPictureInfo = function (id = 0) {
  * Меняет ситили, ничего не возвращает.
  */
 const showLoader = function () {
-    loader.style.visibility = 'visible';
+  loader.style.visibility = 'visible';
 }
 
 /**
@@ -60,10 +60,10 @@ const showLoader = function () {
  * Удаляет таймаут индикатора, ничего не возвращает.
  */
 const hideLoader = function () {
-    loaderTimeout = setTimeout(function () {
-        loader.style.visibility = 'hidden';
-        loaderTimeout.clearTimeout();
-    }, 700);
+  loaderTimeout = setTimeout(function () {
+    loader.style.visibility = 'hidden';
+    clearTimeout(loaderTimeout);
+  }, 700);
 }
 
 /**
@@ -74,11 +74,11 @@ const hideLoader = function () {
  * @param {number} size
  */
 const cropImage = function (src, size = 2) {
-    const [domain, key, id, width, height] = src.split('/').splice(2);
-    const newWidth = Math.floor(+width / size);
-    const newHeight = Math.floor(+height / size);
+  const [domain, key, id, width, height] = src.split('/').splice(2);
+  const newWidth = Math.floor(+width / size);
+  const newHeight = Math.floor(+height / size);
 
-    return `https://${domain}/${key}/${id}/${newWidth}/${newHeight}`;
+  return `https://${domain}/${key}/${id}/${newWidth}/${newHeight}`;
 }
 
 /**
@@ -87,28 +87,27 @@ const cropImage = function (src, size = 2) {
  * @param {array} list
  */
 const renderPictures = function (list) {
-    if (!list.length) {
-        throw Error(`Pictures not defined. The list length: ${list.length}`);
-    }
+  if (!list.length) {
+    throw Error(`Pictures not defined. The list length: ${list.length}`);
+  }
 
+  list.forEach(function (element) {
     const clone = templateImageCard.content.cloneNode(true);
     const fragment = document.createDocumentFragment();
+    const link = clone.querySelector('a');
+    const image = clone.querySelector('img');
 
-    list.forEach(function (element) {
-        const link = clone.querySelector('a');
+    link.href = element.url;
+    link.dataset.id = element.id;
+    image.src = cropImage(element.download_url, 5);
+    image.alt = element.author;
+    image.classList.add('preview');
 
-        link.href = element.url;
-        link.dataset.id = element.id;
-
-        const image = clone.querySelector('img');
-        image.src = cropImage(element.download_url, 5);
-        image.alt = element.author;
-        image.classList.add('preview');
-        fragment.appendChild(clone)
-    });
-
+    fragment.appendChild(clone);
     container.appendChild(fragment);
-    hideLoader();
+  });
+
+  hideLoader();
 }
 
 /**
@@ -117,28 +116,30 @@ const renderPictures = function (list) {
  * @param {object} picture
  */
 const renderPopupPicture = function (picture) {
-    const clone = templateImagePopup.content.cloneNode(true);
-    const img = clone.querySelector('img');
-    const link = clone.querySelector('a');
-    const author = clone.querySelector('.author');
+  // console.log(picture);
 
-    img.src = cropImage(picture.download_url, 2);
-    img.alt = picture.author;
-    author.textContent = picture.author;
-    img.width = picture.width / 10;
-    link.href = picture.download_url;
+  const clone = templateImagePopup.content.cloneNode(true);
+  const img = clone.querySelector('img');
+  const link = clone.querySelector('a');
+  const author = clone.querySelector('.author');
 
-    popupContainer.innerHTML = '';
-    popupContainer.appendChild(clone)
-    hideLoader();
-    togglePopup();
+  img.src = cropImage(picture.download_url, 2);
+  img.alt = picture.author;
+  author.textContent = picture.author;
+  img.width = picture.width / 10;
+  link.href = picture.download_url;
+
+  popupContainer.innerHTML = '';
+  popupContainer.appendChild(clone)
+  hideLoader();
+  togglePopup();
 }
 
 /**
  * Функция переклбчает класс открытия на попапе
  */
 const togglePopup = function () {
-    popup.classList.toggle('open');
+  popup.classList.toggle('open');
 }
 
 /**
@@ -150,16 +151,16 @@ const togglePopup = function () {
  * @param {MouseEvent} evt
  */
 const actionHandler = function (evt) {
-    evt.preventDefault();
-    const nextPage = evt.currentTarget.dataset.page;
-    evt.currentTarget.dataset.page = nextPage + 1;
+  evt.preventDefault();
+  const nextPage = evt.currentTarget.dataset.page;
+  evt.currentTarget.dataset.page = Number(nextPage) + 1;
 
-    if (nextPage > MAX_PAGE_IAMGES) {
-        console.warn(`WARN: You are trying to call a page that exceeds ${MAX_PAGE_IAMGES}`);
-        evt.currentTarget.disabled = true;
-    } else {
-        getPictures(nextPage);
-    }
+  if (nextPage > MAX_PAGE_IAMGES) {
+    console.warn(`WARN: You are trying to call a page that exceeds ${MAX_PAGE_IAMGES}`);
+    evt.currentTarget.disabled = true;
+  } else {
+    getPictures(nextPage);
+  }
 }
 
 /**
@@ -169,11 +170,11 @@ const actionHandler = function (evt) {
  * @param {MouseEvent} evt
  */
 const imageHandler = function (evt) {
-    evt.preventDefault();
+  evt.preventDefault();
 
-    if (evt.target.closest('a')) {
-        getPictureInfo(evt.target.dataset.id);
-    }
+  if (evt.target.closest('a')) {
+    getPictureInfo(evt.target.parentNode.dataset.id);
+  }
 }
 
 action.addEventListener('click', actionHandler);
